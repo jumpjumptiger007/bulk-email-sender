@@ -1,0 +1,187 @@
+name: Send Emails
+
+on:
+  push:
+    paths:
+      - 'tasks/*.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  send_emails:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: |
+          npm init -y
+          npm install nodemailer
+      
+      - name: Find new task files
+        id: find_tasks
+        run: |
+          TASK_FILES=$(find tasks -name "*.json" -type f -mtime -1 | tr '\n' ' ')
+          echo "task_files=$TASK_FILES" >> $GITHUB_OUTPUT
+      
+      - name: Process and send emails
+        if: steps.find_tasks.outputs.task_files != ''
+        env:
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+          EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_FROM_NAME: ${{ secrets.EMAIL_FROM_NAME }}
+        run: |
+          cat > send-emails.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          const nodemailer = require('nodemailer');
+          
+          // Create email transporter
+          const transporter = nodemailer.createTransport({
+            host: process.env.EMAIL_HOST,
+            port: process.env.EMAIL_PORT,
+            secure: process.env.EMAIL_PORT === '465',
+            auth: {
+              user: process.env.EMAIL_USER,
+              pass: process.env.EMAIL_PASSWORD,
+            },
+          });
+          
+          // Get task file list
+          const taskFilePaths = process.argv.slice(2);
+          
+          // Replace template variables
+          function replaceTemplateVariables(template, variables) {
+            let result = template;
+            for (const [key, value] of Object.entries(variables)) {
+              const regex = new RegExp(`{{${key}}}`, 'g');
+              result = result.replace(regex, value || '');
+            }
+            return result;
+          }
+          
+          // Process each task file
+          async function processTaskFile(filePath) {
+            console.log(`Processing task file: ${filePath}`);
+            
+            try {
+              // Read task data
+              const taskData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+              const { taskName, subject, template, recipients } = taskData;
+              
+              if (!subject || !template || !recipients || !Array.isArray(recipients)) {
+                throw new Error('Invalid task data format');
+              }
+              
+              console.log(`Task name: ${taskName}`);
+              console.log(`Recipients count: ${recipients.length}`);
+              
+              // Create sending results record
+              const results = {
+                taskName,
+                totalRecipients: recipients.length,
+                successCount: 0,
+                failureCount: 0,
+                errors: [],
+                startTime: new Date().toISOString(),
+                endTime: null
+              };
+              
+              // Send email to each recipient
+              for (const recipient of recipients) {
+                if (!recipient.email) {
+                  results.errors.push(`Recipient missing email field`);
+                  results.failureCount++;
+                  continue;
+                }
+                
+                try {
+                  // Prepare email content
+                  const emailContent = replaceTemplateVariables(template, recipient);
+                  const emailSubject = replaceTemplateVariables(subject, recipient);
+                  
+                  // Send email
+                  await transporter.sendMail({
+                    from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM}>`,
+                    to: recipient.email,
+                    subject: emailSubject,
+                    html: emailContent,
+                  });
+                  
+                  console.log(`Sent successfully: ${recipient.email}`);
+                  results.successCount++;
+                  
+                  // Add a short delay to avoid sending too quickly
+                  await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                  console.error(`Send failed: ${recipient.email}, Error: ${error.message}`);
+                  results.errors.push(`${recipient.email}: ${error.message}`);
+                  results.failureCount++;
+                }
+              }
+              
+              // Update completion time
+              results.endTime = new Date().toISOString();
+              
+              // Save results to file
+              const resultsFilePath = filePath.replace('.json', '_results.json');
+              fs.writeFileSync(resultsFilePath, JSON.stringify(results, null, 2));
+              
+              console.log(`Task completed. Success: ${results.successCount}, Failure: ${results.failureCount}`);
+              return results;
+            } catch (error) {
+              console.error(`Failed to process task file: ${error.message}`);
+              return null;
+            }
+          }
+          
+          // Main function
+          async function main() {
+            console.log('Starting to process email tasks...');
+            
+            const allResults = [];
+            
+            for (const filePath of taskFilePaths) {
+              const result = await processTaskFile(filePath);
+              if (result) {
+                allResults.push(result);
+              }
+            }
+            
+            console.log('All tasks processed.');
+            console.log(`Total tasks: ${allResults.length}`);
+            console.log(`Total successful sends: ${allResults.reduce((sum, r) => sum + r.successCount, 0)}`);
+            console.log(`Total failed sends: ${allResults.reduce((sum, r) => sum + r.failureCount, 0)}`);
+          }
+          
+          main().catch(console.error);
+          EOF
+          
+          node send-emails.js ${{ steps.find_tasks.outputs.task_files }}
+      
+      - name: Upload results
+        if: always() && steps.find_tasks.outputs.task_files != ''
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          
+          # Check if there are changes to commit
+          if [[ -n $(git status -s | grep "_results.json") ]]; then
+            git add tasks/*_results.json
+            git commit -m "Add email sending results [skip ci]"
+            git push
+          else
+            echo "No result files to commit"
+          fi

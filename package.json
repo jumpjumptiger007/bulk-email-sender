@@ -1,0 +1,21 @@
+{
+  "name": "email-sender",
+  "version": "1.0.0",
+  "description": "Lightweight Bulk Email Sender System",
+  "main": "send-emails.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "send": "node send-emails.js"
+  },
+  "keywords": [
+    "email",
+    "bulk",
+    "sender",
+    "github-actions"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "nodemailer": "^6.9.1"
+  }
+}

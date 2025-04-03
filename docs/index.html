@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Email Sender</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+    <link rel="manifest" href="assets/favicon/site.webmanifest">   
+<body>
+    <header class="header" style="background-color: white;">
+        <div style="max-width: 960px; margin: 0 auto; padding: 0 1rem;">
+          <nav class="navbar" style="display: flex; align-items: center; padding: 0.05rem 0;">
+            <a href="http://yliu.tech" class="logo">
+              <img src="assets/favicon/android-chrome-512x512.png" alt="YAL Logo"
+                   style="height: 50px; width: 50px; border-radius: 6px;">
+            </a>
+          </nav>
+        </div>
+    </header>
+    <div class="container">
+        <header>
+            <h1>Bulk Email Sender</h1>
+            <p>
+              A zero-cost, open-source, serverless system for sending personalized bulk emails using either GitHub Actions or your local machine. It uses SMTP to deliver emails and supports templated content, recipient list management via CSV, and detailed delivery reporting.
+            </p>
+            <div style="margin-top: 1rem;">
+              <a href="https://github.com/jumpjumptiger007/bulk-email-sender"
+                 class="github-button"
+                 style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #3182ce; color: white; text-decoration: none; border-radius: 6px; font-size: 1rem; font-weight: 500; transition: background-color 0.3s;"
+                 target="_blank">
+                View Project on GitHub
+              </a>
+            </div>
+        </header>
+        <main>
+            <section class="email-form">
+                <h2>Create Email Task</h2>
+                
+                <div class="form-group">
+                    <label for="subject">Email Subject:</label>
+                    <input type="text" id="subject" placeholder="Enter email subject">
+                </div>
+
+                <div class="form-group">
+                    <label for="template">Email Template:</label>
+                    <textarea id="template" placeholder="Enter email content, you can use variables like {{name}}"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <h3>Template Variables Guide</h3>
+                    <p>You can use the following variable formats in your email template:</p>
+                    <ul>
+                        <li><code>{{name}}</code> - Recipient's name</li>
+                        <li><code>{{email}}</code> - Recipient's email</li>
+                        <li><code>{{custom1}}</code>, <code>{{custom2}}</code> - Other custom fields</li>
+                    </ul>
+                    <p>The column names in your CSV file should match the variable names</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="csvFile">Recipients CSV File:</label>
+                    <input type="file" id="csvFile" accept=".csv">
+                    <p class="help-text">CSV file should include headers in the first row and at least one "email" column</p>
+                </div>
+
+                <div class="recipients-preview">
+                    <h3>Recipients Preview</h3>
+                    <div id="recipientsTable">
+                        <!-- CSV preview will be displayed here -->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="taskName">Task Name:</label>
+                    <input type="text" id="taskName" placeholder="Enter task name">
+                </div>
+
+                <div class="actions">
+                    <button id="previewBtn">Preview Email</button>
+                    <button id="generateBtn">Generate Task JSON</button>
+                </div>
+            </section>
+
+            <section class="preview-section" id="previewSection" style="display: none;">
+                <h2>Email Preview</h2>
+                <div class="preview-container">
+                    <div class="preview-header">
+                        <div class="preview-subject" id="previewSubject"></div>
+                    </div>
+                    <div class="preview-body" id="previewBody"></div>
+                </div>
+                <div class="actions">
+                    <button id="closePreviewBtn">Close Preview</button>
+                </div>
+            </section>
+
+            <section class="json-output" id="jsonOutput" style="display: none;">
+                <h2>Task JSON</h2>
+                <pre id="jsonDisplay"></pre>
+                <div class="actions">
+                    <button id="downloadBtn">Download JSON File</button>
+                    <button id="copyBtn">Copy JSON</button>
+                </div>
+                <div class="instructions">
+                    <h3>Usage Instructions</h3>
+                    <ol>
+                        <li>Download the generated JSON file</li>
+                        <li>Upload the file to the <code>tasks</code> directory in your GitHub repository</li>
+                        <li>After uploading, GitHub Actions will automatically process the task and send emails</li>
+                    </ol>
+                </div>
+            </section>
+        </main>
+
+        <footer class="page-footer" style="margin-top: 3rem; text-align: center; color: #6b7280; font-size: 0.875rem; padding: 2rem 0; border-top: 1px solid #e5e7eb;">
+            <p>
+             &copy; 2025
+             <a href="https://yliu.tech/" style="color: #3182ce; text-decoration: none; font-weight: 500;">
+              Yiqiang Adrian Liu
+             </a>
+             . All rights reserved. View the full project on
+             <a href="https://github.com/jumpjumptiger007/bulk-email-sender" style="color: #3182ce; text-decoration: none; font-weight: 500;">
+              GitHub
+             </a>
+            </p>
+        </footer>
+    </div>
+
+    <script src="js/papaparse.min.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>
