@@ -1,11 +1,9 @@
 {
   "taskName": "test",
   "totalRecipients": 1,
-  "successCount": 0,
-  "failureCount": 1,
-  "errors": [
-    "adrian@yliu.tech: Unexpected socket close"
-  ],
-  "startTime": "2025-04-04T01:01:27.485Z",
-  "endTime": "2025-04-04T01:01:38.548Z"
+  "successCount": 1,
+  "failureCount": 0,
+  "errors": [],
+  "startTime": "2025-04-04T01:05:06.396Z",
+  "endTime": "2025-04-04T01:05:07.770Z"
 }
