@@ -1,0 +1,13 @@
+{
+  "taskName": "example_task",
+  "totalRecipients": 3,
+  "successCount": 0,
+  "failureCount": 3,
+  "errors": [
+    "test1@example.com: Unexpected socket close",
+    "test2@example.com: Unexpected socket close",
+    "test3@example.com: Unexpected socket close"
+  ],
+  "startTime": "2025-04-04T00:59:51.074Z",
+  "endTime": "2025-04-04T01:00:24.262Z"
+}
